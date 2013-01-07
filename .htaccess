@@ -1,0 +1,9 @@
+Options -Indexes
+
+<FilesMatch "\.(py|pyc)$|(.git|data)/*">
+  Order allow,deny
+</FilesMatch>
+
+<Files .gitignore>
+  Order allow,deny
+</Files>
