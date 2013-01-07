@@ -1,6 +1,6 @@
 Options -Indexes
 
-<FilesMatch "\.(py|pyc)$|(.git|data)/*">
+<FilesMatch "\.(py|pyc)$|(.git|data|tools)/*">
   Order allow,deny
 </FilesMatch>
 
