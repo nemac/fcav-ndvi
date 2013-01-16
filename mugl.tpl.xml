@@ -8,7 +8,7 @@
     <grid color="0xcccccc"/>
   </horizontalaxis>
   <verticalaxis id="value" min="0" max="100">
-    <title angle="90">NDVI</title>
+    <title angle="90" position="-37 0">NDVI</title>
   </verticalaxis>
   <plot>
     <horizontalaxis ref="datetime">
@@ -17,9 +17,9 @@
     <verticalaxis ref="value">
       <variable ref="value"/>
     </verticalaxis>
-    <renderer type="line">
+    <renderer type="pointline">
       <option name="linecolor" value="black"/>
-      <option name="dotcolor" value="blue"/>
+      <option name="pointcolor" value="blue"/>
       <option name="pointsize" value="1.5"/>
     </renderer>
   </plot>
