@@ -1,5 +1,5 @@
 Header set Access-Control-Allow-Origin "*"
-Options -Indexes
+Options -Indexes +ExecCGI
 
 <FilesMatch "\.(py|pyc)$|(.git|data|tools)/*">
   Order allow,deny
