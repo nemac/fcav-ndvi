@@ -12,7 +12,7 @@
 # deployed copy.
 
 ### 'data_dir' is the directory where the data files are located
-data_dir = "./data"
+data_dir = "../data"
 
 ### `data_files` should be an array which specifies the data files in
 ### `data_dir`.  Each element in the `data_files` array should be a
