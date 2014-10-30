@@ -1,3 +1,4 @@
+AddHandler cgi-script .cgi
 Header set Access-Control-Allow-Origin "*"
 Options -Indexes +ExecCGI
 
