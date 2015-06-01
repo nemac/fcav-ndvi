@@ -1,4 +1,4 @@
 #! /bin/bash
 
+cd html
 ./tsmugl_product.cgi args=CONUS_NDVI,-9433550.581365503,4276088.483994426
-
