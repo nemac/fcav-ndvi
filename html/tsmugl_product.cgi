@@ -2,9 +2,11 @@
 
 # tsmugl.cgi 'args=bigfile,-8359100,5105690'
 
+import cgi, sys
+
+sys.path.append("..")
 import Config
 
-import cgi, sys
 from osgeo import gdal, osr
 from netCDF4 import Dataset
 ###from Scientific.IO.NetCDF import *
@@ -77,7 +79,7 @@ for tsfile in Config.data_files:
         vlist = vlist + ("%s,%1d\n" % (times[r],b))
         r = r + 1
 
-muglTemplate = Template("mugl.tpl.xml")
+muglTemplate = Template("../mugl.tpl.xml")
 
 print "Content-type: text/xml\n"
 
