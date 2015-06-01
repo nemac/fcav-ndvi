@@ -1,6 +1,6 @@
 # NetCDF Format
 
-Below is the output of the command `ncdump -h MCD13.A2013.unaccum`, showing the structure
+Below is the output of the command `ncdump -h MCD13.A2013.unaccum.nc`, showing the structure
 of one of the NetCDF files.
 
 
