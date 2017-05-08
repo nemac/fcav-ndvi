@@ -3,11 +3,17 @@
 This application contains the code and data needed for the server-side
 part of the "multigraph" feature of NEMAC's FCAV viewer.  This is the
 feature that allows a user to click on a point in the map and see a
-graph of historical NDVI values for that point.  The code and data
+graph of historical NDVI values for that point. The code and data
 here provide a service that receives requests from the FCAV
 application containing the coordinates of a point, and returns a MUGL
 file containing the graph specification and data for the NDVI graph
 for that point.
+
+The resulting timeseries differentiates NDVI data from two data sources:
+smoothed MODIS data and unprocessed "raw" eMODIS data. The unprocessed
+data serves to provide data for the recent past when smoothed
+MODIS data is unavailable. When a smoothed NetCDF file becomes available,
+it should replace its unsmoothed counterpart (see "Adding a new NetCDF file").
 
   * `data` directory
 
@@ -19,6 +25,14 @@ for that point.
     they are very large (one file per year starting with 2010, each file
     is about 13GB).
 
+    The subdirectory `emodis_weekly` has NetCDFs containing 8-day eMODIS NDVI.
+    The eMODIS data files are generated on a weekly basis from tiff files and
+    appended to an ongoing partial year NetCDF file located in the
+    parent directory with the word "ONGOING" in the filename.
+    When a partial year NetCDF is completed, "ONGOING" is removed from
+    the filename automatically. Partial and full year eMODIS NetCDFs
+    in the `data` directory are distinguished by the presence of the word
+    "RAW" in the filename. 
     
   * `html` directory: this is the web root of the project, containing
     a single python script `tsmugl_product.cgi` that implements the service
@@ -65,6 +79,12 @@ To add a new data file:
    the new `*.nc` file; this file should have the same name as the `*.nc`
    file, but should end with the suffix ".ts.xml" rather than ".nc".
    This file should be in the data directory along with the `*.nc` file.
+   If the NDVI data file is a smoothed MODIS file replacing an
+   unprocessed eMODIS data file, there should be a dates file already.
+   In this case, simply remove the word "RAW" from the filename and
+   verify that the file (minus the suffix) has the same name as the
+   ingoing data file. Also, update the filenames in `Config.py`
+   in the same fashion, removing "RAW" or "ONGOING" as needed.
 
    As mentioned above, this file contains the dates for the data
    contained in the `*.nc` file.  To see the format of this file, look
@@ -117,8 +137,8 @@ To add a new data file:
    of the list.
    
    Also, if you are deploying a full year data file to replace a
-   previously deployed partial year file, be sure to remove the
-   partial year from from the list in `Config.py`.
+   previously deployed partial year file, or a raw eMODIS file,
+   be sure to remove the partial year from from the list in `Config.py`.
    
 4. Edit the `mugl.tpl.xml` file to change the `max` attribute of
    the `<horizontalaxis>` element to be the last day of the month
