@@ -36,6 +36,8 @@ data_files = ["MCD13.A2000.unaccum",
               "MCD13.A2011.unaccum",
               "MCD13.A2012.unaccum",
               "MCD13.A2013.unaccum",
-			  "MCD13.A2014.unaccum",
-			  "MCD13.A2015.unaccum"
+              "MCD13.A2014.unaccum",
+              "MCD13.A2015.unaccum",
+              "MCD13.A2016.unaccum",
+              "MCD13.A2017.unaccum"
               ]
