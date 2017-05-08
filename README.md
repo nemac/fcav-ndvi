@@ -83,8 +83,7 @@ To add a new data file:
    unprocessed eMODIS data file, there should be a dates file already.
    In this case, simply remove the word "RAW" from the filename and
    verify that the file (minus the suffix) has the same name as the
-   ingoing data file. Also, update the filenames in `Config.py`
-   in the same fashion, removing "RAW" or "ONGOING" as needed.
+   ingoing data file.
 
    As mentioned above, this file contains the dates for the data
    contained in the `*.nc` file.  To see the format of this file, look
@@ -139,6 +138,10 @@ To add a new data file:
    Also, if you are deploying a full year data file to replace a
    previously deployed partial year file, or a raw eMODIS file,
    be sure to remove the partial year from from the list in `Config.py`.
+
+   Note: eMODIS files do not need ".RAW" or ".RAW.ONGOING" added to them
+   in the config file. The paths for these files is resolved programmatically
+   from the "base" filename.
    
 4. Edit the `mugl.tpl.xml` file to change the `max` attribute of
    the `<horizontalaxis>` element to be the last day of the month
