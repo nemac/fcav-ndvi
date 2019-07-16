@@ -1,10 +1,9 @@
 #! /usr/bin/env python
 
-import cgi, sys, os, os.path
+#import cgi, sys
+import sys
 
-sys.path.append("..")
-#sys.path.append("../new-data/newNetCDFs2")
-#sys.path.append("../new-data/newNetCDFs")
+sys.path.append("../new-data/newNetCDFs2")
 import Config
 
 #from osgeo import gdal, osr
@@ -12,19 +11,13 @@ import Config
 import subprocess
 import xml.etree.ElementTree as ET
 
-params = cgi.FieldStorage()
 argstring = params["args"].value
 arglist = argstring.split(",")
-lon = arglist[1]
-lat = arglist[2]
+lat = arglist[1]
+lon = arglist[2]
 
-def get_tsfile_path (tsfile):
-    data_dir = Config.data_dir
-    path = os.path.join(data_dir, tsfile)
-    if os.access(path + '.nc', os.F_OK):
-        return path
-    else:
-        return False
+#lat = "35.2411"
+#lon = "-76.8384"
 
 def unsign8(x):
     if x >= 0:
@@ -41,12 +34,11 @@ class Template:
     def render(self, dict):
         return self.contents % dict
 
-output = []
-for tsfile in Config.data_files:
-    tsfile = get_tsfile_path(tsfile)
-    if tsfile is False:
-        continue
+vlist = ""
 
+output = []
+for tsfile in Config.data_files: 
+    tsfile = Config.data_dir + "/" + tsfile
     ncfilename = tsfile + ".nc"
 
     data = subprocess.check_output(
@@ -56,20 +48,12 @@ for tsfile in Config.data_files:
 
     times = []
     tptree = ET.parse(tsfile + ".ts.xml")
-    timepoints = tptree.findall('.//timepoint')
+    timepoints = tptree.findall('//timepoint')
     for timepoint in timepoints:
         times.append(timepoint.text)
 
-    formatString = "%s,%s"
     for i, v in enumerate(data):
-        # Rescale the value from 0-250 to 0-100
-        if int(v) > 100:
-            continue
-        if v == '0':
-            val = v
-        else:
-            val = str(int(v))
-        output.append(formatString % (times[i],val))
+        output.append("%s,%s" % (times[i],v))
 
 muglTemplate = Template("../mugl.tpl.xml")
 

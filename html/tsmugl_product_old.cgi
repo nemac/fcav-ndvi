@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-import cgi, sys, os, os.path
+import cgi, sys, os
 
 sys.path.append("..")
 #sys.path.append("../new-data/newNetCDFs2")
@@ -20,9 +20,15 @@ lat = arglist[2]
 
 def get_tsfile_path (tsfile):
     data_dir = Config.data_dir
-    path = os.path.join(data_dir, tsfile)
-    if os.access(path + '.nc', os.F_OK):
+    path = '{0}/{1}'.format(data_dir, tsfile)
+    path_raw = path + '.RAW'
+    path_raw_ongoing = path + '.RAW.ONGOING'
+    if os.access(path+'.nc', os.F_OK):
         return path
+    if os.access(path_raw+'.nc', os.F_OK):
+        return path_raw
+    if os.access(path_raw_ongoing+'.nc', os.F_OK):
+        return path_raw_ongoing
     else:
         return False
 
@@ -60,16 +66,11 @@ for tsfile in Config.data_files:
     for timepoint in timepoints:
         times.append(timepoint.text)
 
-    formatString = "%s,%s"
+    formatString = "%s,%s,-9000"
+    if 'RAW' in tsfile.split('.'):
+      formatString = "%s,-9000,%s"
     for i, v in enumerate(data):
-        # Rescale the value from 0-250 to 0-100
-        if int(v) > 100:
-            continue
-        if v == '0':
-            val = v
-        else:
-            val = str(int(v))
-        output.append(formatString % (times[i],val))
+        output.append(formatString % (times[i],v))
 
 muglTemplate = Template("../mugl.tpl.xml")
 
