@@ -3,14 +3,14 @@
 import cgi, sys
 
 sys.path.append("..")
-#sys.path.append("../new-data/newNetCDFs2")
-sys.path.append("../new-data/newNetCDFs")
-import Config
+from Config import *
 
 #from osgeo import gdal, osr
 #from netCDF4 import Dataset
 import subprocess
 import xml.etree.ElementTree as ET
+
+import calendar
 
 params = cgi.FieldStorage()
 argstring = params["args"].value
@@ -27,20 +27,25 @@ def unsign8(x):
     return 256 + x
 
 output = []
-for tsfile in Config.data_files: 
-    tsfile = Config.data_dir + "/" + tsfile
-    ncfilename = tsfile + ".tif"
+for filename in LANDAT_NDVI_FILES: 
+    tsfile = LANDAT_NDVI_ARCHIVE_DIR + "/" + filename
 
     data = subprocess.check_output(
-        ['gdallocationinfo', ncfilename, '-wgs84', '-valonly', lat, lon])
+        ['gdallocationinfo', tsfile, '-wgs84', '-valonly', lat, lon])
     data = data.split("\n");
     data.remove('')
 
     times = []
-    tptree = ET.parse(tsfile + ".ts.xml")
-    timepoints = tptree.findall('//timepoint')
-    for timepoint in timepoints:
-        times.append(timepoint.text)
+    # Extract the year from the filename
+    year = int(filename[4:8])
+    dates_file = LEAP_DATES_FILE if calendar.isleap(year) else NONLEAP_DATES_FILE
+    f = open(dates_file)
+    dates = [ x.rstrip('\n') for x in f.readlines() ]
+    f.close()
+
+    times = [ '' + str(year) + x for x in dates ]
+    # The last timepoint rolls over to the next year
+    times[-1] = '' + str(year+1) + times[-1][4:]
 
     for i, v in enumerate(data):
         output.append("%s,%s" % (times[i],v))
