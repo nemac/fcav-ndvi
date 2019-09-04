@@ -19,7 +19,7 @@ lon = arglist[1]
 lat = arglist[2]
 
 def get_tsfile_path (tsfile):
-    data_dir = Config.data_dir
+    data_dir = Config.FORWARN_MAX_MODIS_DIR
     path = os.path.join(data_dir, tsfile)
     if os.access(path + '.nc', os.F_OK):
         return path
@@ -42,7 +42,7 @@ class Template:
         return self.contents % dict
 
 output = []
-for tsfile in Config.data_files:
+for tsfile in Config.FORWARN_MAX_MODIS_FILES:
     tsfile = get_tsfile_path(tsfile)
     if tsfile is False:
         continue

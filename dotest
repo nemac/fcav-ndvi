@@ -1,4 +1,4 @@
 #! /bin/bash
 
 cd html
-./tsmugl_product.cgi args=CONUS_NDVI,-80.21665953122013,35.563506726842284
+./tsmugl_product.cgi args=CONUS_NDVI,-80.21665953122013,35.563506726842284 > test_result

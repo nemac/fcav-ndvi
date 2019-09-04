@@ -29,7 +29,7 @@ def unsign8(x):
 output = []
 for tsfile in Config.data_files: 
     tsfile = Config.data_dir + "/" + tsfile
-    ncfilename = tsfile + ".nc"
+    ncfilename = tsfile + ".tif"
 
     data = subprocess.check_output(
         ['gdallocationinfo', ncfilename, '-wgs84', '-valonly', lat, lon])
