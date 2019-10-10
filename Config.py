@@ -15,32 +15,38 @@
 FORWARN_MAX_MODIS_DIR = "../data/forwarn_archive"
 
 # LanDAT NDVI files from Joe Spruce
-LANDAT_NDVI_ARCHIVE_DIR = "../data/landat/ndvi_archive"
+LANDAT_NDVI_ARCHIVE_DIR = "../data/landat_archive"
 
 LANDAT_NDVI_FILES = [
-  'land2000',
-  'land2001',
-  'land2002',
-  'land2003',
-  'land2004',
-  'land2005',
-  'land2006',
-  'land2007',
-  'land2008',
-  'land2009',
-  'land2010',
-  'land2011',
-  'land2012',
-  'land2013',
-  'land2014',
-  'land2015',
-  'land2016',
-  'land2017'
+  'land2000.tif',
+  'land2001.tif',
+  'land2002.tif',
+  'land2003.tif',
+  'land2004.tif',
+  'land2005.tif',
+  'land2006.tif',
+  'land2007.tif',
+  'land2008.tif',
+  'land2009.tif',
+  'land2010.tif',
+  'land2011.tif',
+  'land2012.tif',
+  'land2013.tif',
+  'land2014.tif',
+  'land2015.tif',
+  'land2016.tif',
+  'land2017.tif'
 ]
 
-NONLEAP_DATES_FILE = "../data/dates_nonleap.txt"
 
-LEAP_DATES_FILE = "../data/dates_leap.txt"
+# These dates are the end dates for the 24-day windows
+NONLEAP_DATES_FILE = "../leap-dates.txt"
+LEAP_DATES_FILE = "../nonleap-dates.txt"
+
+# These dates are the center dates for the 24-day windows
+LANDAT_LEAP_DATES_FILE = "../center-leap-dates.txt"
+LANDAT_NONLEAP_DATES_FILE = "../center-nonleap-dates.txt"
+
 
 ### `data_files` should be an array which specifies the data files in
 ### `data_dir`.  Each element in the `data_files` array should be a

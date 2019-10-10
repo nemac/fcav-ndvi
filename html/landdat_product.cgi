@@ -38,7 +38,7 @@ for filename in LANDAT_NDVI_FILES:
     times = []
     # Extract the year from the filename
     year = int(filename[4:8])
-    dates_file = LEAP_DATES_FILE if calendar.isleap(year) else NONLEAP_DATES_FILE
+    dates_file = LANDAT_LEAP_DATES_FILE if calendar.isleap(year) else LANDAT_NONLEAP_DATES_FILE
     f = open(dates_file)
     dates = [ x.rstrip('\n') for x in f.readlines() ]
     f.close()
