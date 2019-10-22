@@ -72,5 +72,6 @@ FORWARN_MAX_MODIS_FILES = [
        'maxMODIS.2015.std',
        'maxMODIS.2016.std',
        'maxMODIS.2017.std',
-       'maxMODIS.2018.std'
+       'maxMODIS.2018.std',
+       'maxMODIS.2019.std'
 ]
