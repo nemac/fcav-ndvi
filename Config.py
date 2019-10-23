@@ -11,8 +11,11 @@
 # and edit it to contain settings that are correct for that
 # deployed copy.
 
-# ForWarn 2 NetCDFs
-FORWARN_MAX_MODIS_DIR = "../data/forwarn_archive"
+# Max MODIS STD NetCDFs
+FORWARN_STD_MAX_MODIS_DIR = "../data/forwarn_archive"
+
+# Max MODIS NRT NetCDFs (8-day)
+FORWARN_NRT_MAX_MODIS_DIR = "/fsdata4/forwarn2_products/forwarn2_build_dev/netcdf/nrt"
 
 # LanDAT NDVI files from Joe Spruce
 LANDAT_NDVI_ARCHIVE_DIR = "../data/landat_archive"
