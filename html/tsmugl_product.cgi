@@ -60,7 +60,7 @@ def get_nrt_data(year, lon, lat, num_std_points):
   and take a slice to the end of the list to get the nrt data we want
   '''
   data = []
-  nrt_files = sorted(os.listdir(FORWARN_NRT_MAX_MODIS_DIR))
+  nrt_files = [ f for f in sorted(os.listdir(FORWARN_NRT_MAX_MODIS_DIR)) if 'nrt' in f ]
   num_nrt_points = 46 - num_std_points
   nrt_files = nrt_files[-num_nrt_points:]
   for nrt_f in nrt_files:
