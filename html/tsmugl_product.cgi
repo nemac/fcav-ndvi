@@ -51,14 +51,37 @@ def get_year_from_filename(filename):
   return filename.split('.')[1]
 
 
-def get_nrt_data(year, lon, lat):
+def get_nrt_data(year, lon, lat, num_std_points):
+  '''
+  We want the number of data points for the year to add up to 46.
+  In case there are old NRT files, we want to only include the latest data
+  that doesn't double-count for included STD data. We use negative indices
+  to count backwards from the end of the list of files (where the latest data is)
+  and take a slice to the end of the list to get the nrt data we want
+  '''
   data = []
   nrt_files = sorted(os.listdir(FORWARN_NRT_MAX_MODIS_DIR))
+  num_nrt_points = 46 - num_std_points
+  nrt_files = nrt_files[-num_nrt_points:]
   for nrt_f in nrt_files:
     p = os.path.join(FORWARN_NRT_MAX_MODIS_DIR, nrt_f)
     d = extract_data_at_location(p, lon, lat)
     data.append(d)
   return data
+
+
+def format_data_output(data, format_string, times, time_index_offset=0):
+  output = []
+  for i, v in enumerate(data):
+      # Any value greater than 100 is invalid so skip it
+      if int(v) > 100:
+          continue
+      if v == '0':
+          val = v
+      else:
+          val = str(int(v))
+      output.append(format_string % (times[time_index_offset+i],val))
+  return output
 
 
 output = []
@@ -72,10 +95,6 @@ for tsfile in FORWARN_MAX_MODIS_FILES:
     data = extract_data_at_location(ncfilename, lon, lat)
     data = data.split("\n");
     data.remove('')
-    if len(data) < 46:
-      year = get_year_from_filename(tsfile)
-      nrt_data = get_nrt_data(year, lon, lat)
-      data.extend(nrt_data)
 
     times = []
     tptree = ET.parse(tsfile + ".ts.xml")
@@ -83,17 +102,26 @@ for tsfile in FORWARN_MAX_MODIS_FILES:
     for timepoint in timepoints:
         times.append(timepoint.text)
 
-    formatString = "%s,%s"
-    for i, v in enumerate(data):
-        # Any value greater than 100 is invalid so skip it
-        if int(v) > 100:
-            continue
-        if v == '0':
-            val = v
-        else:
-            val = str(int(v))
-        output.append(formatString % (times[i],val))
+    format_string = "%s,%s,-9000"
+    formatted_output = format_data_output(data, format_string, times)
+    output.extend(formatted_output)
 
+    # If there's less than 46 data points we're at the current year
+    # Check for available near-realtime data
+    if len(data) < 46:
+      num_std_points = len(data)
+      year = get_year_from_filename(tsfile)
+      nrt_data = get_nrt_data(year, lon, lat, num_std_points)
+      format_string_nrt = "%s,-9000,%s"
+      # Send num_std_points to offset the index of the times array so the NRT data
+      # gets mapped to the correct timepoint
+      formatted_output = format_data_output(nrt_data, format_string_nrt, times, num_std_points)
+      # Add a dummy point at the location of the final std point to connect
+      # a line between the final STD point and the first NRT point
+      dummy_point = format_data_output([ data[-1] ], format_string_nrt, times, num_std_points-1)
+      # Dummy point becomes first NRT point in output
+      output.extend(dummy_point)
+      output.extend(formatted_output)
 
 
 muglTemplate = Template("../mugl.tpl.xml")

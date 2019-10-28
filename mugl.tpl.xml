@@ -18,7 +18,7 @@
 	<labels format="%%1f" spacing="100 50 20 10 5 1"/>
   </verticalaxis>
   <plot>
-     <legend label="NDVI"/>
+     <legend label="MODIS"/>
     <horizontalaxis ref="datetime">
       <variable ref="datetime"/>
     </horizontalaxis>
@@ -31,10 +31,22 @@
       <option name="pointsize" value="1.0"/>
     </renderer>
   </plot>
+  <plot>
+    <legend label="eMODIS (provisional)"/>
+    <verticalaxis ref="value">
+      <variable ref="raw_value"/>
+    </verticalaxis>
+    <renderer type="pointline">
+      <option name="linecolor" value="red"/>
+      <option name="pointcolor" value="red"/>
+      <option name="pointsize" value="1.0"/>
+    </renderer>
+  </plot>
   <data>
     <variables>
       <variable column="0" type="datetime" id="datetime"/>
-      <variable column="1" id="value"/>
+      <variable column="1" id="value" missingvalue="-9000" missingop="le"/>
+      <variable column="2" id="raw_value" missingvalue="-9000" missingop="le"/>
     </variables>
     <values>
 %(values)s
