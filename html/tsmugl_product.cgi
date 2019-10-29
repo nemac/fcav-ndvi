@@ -37,7 +37,8 @@ class Template:
         self.contents = ""
         for line in f:
             self.contents = self.contents + line
-        f.close def render(self, dict):
+        f.close()
+    def render(self, dict):
         return self.contents % dict
 
 
