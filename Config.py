@@ -51,7 +51,7 @@ LANDAT_LEAP_DATES_FILE = "../center-leap-dates.txt"
 LANDAT_NONLEAP_DATES_FILE = "../center-nonleap-dates.txt"
 
 
-### `data_files` should be an array which specifies the data files in
+### Should should be an array which specifies the data files in
 ### `data_dir`.  Each element in the `data_files` array should be a
 ### string which is name of a NetCDF file in data_dir, WITHOUT the
 ### final `.nc` suffix.
@@ -76,5 +76,6 @@ FORWARN_MAX_MODIS_FILES = [
        'maxMODIS.2016.std',
        'maxMODIS.2017.std',
        'maxMODIS.2018.std',
-       'maxMODIS.2019.std'
+       'maxMODIS.2019.std',
+       'maxMODIS.2020.std'
 ]
