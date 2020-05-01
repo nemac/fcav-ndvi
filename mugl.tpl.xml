@@ -8,7 +8,7 @@
   <legend rows="1" border="0" opacity="1" base="0 1" anchor="0 1" position="0 30">
     <icon border="0" width="30" height="30"/>
   </legend>
-  <horizontalaxis id="datetime" type="datetime" min="20030101" max="20191231">
+  <horizontalaxis id="datetime" type="datetime" min="20030101" max="20201231">
     <labels format="%%m/%%d/%%y" spacing="1Y 6M 4M 2M 1M 16D 8D 1D"/>
     <title>Date/Time</title>
     <grid color="0xcccccc"/>
