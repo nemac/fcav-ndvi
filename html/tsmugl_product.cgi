@@ -1,16 +1,12 @@
-#! /usr/bin/env python
+#!/usr/bin/env python
 
 import cgi, sys, os, os.path
+import calendar
 
 sys.path.append("..")
-#sys.path.append("../new-data/newNetCDFs2")
-#sys.path.append("../new-data/newNetCDFs")
 from Config import *
 
-#from osgeo import gdal, osr
-#from netCDF4 import Dataset
 import subprocess, datetime
-import xml.etree.ElementTree as ET
 
 params = cgi.FieldStorage()
 argstring = params["args"].value
@@ -18,18 +14,11 @@ arglist = argstring.split(",")
 lon = arglist[1]
 lat = arglist[2]
 
-def get_tsfile_path (tsfile):
-    data_dir = FORWARN_STD_MAX_MODIS_DIR
-    path = os.path.join(data_dir, tsfile)
-    if os.access(path + '.nc', os.F_OK):
-        return path
-    else:
-        return False
-
 def unsign8(x):
     if x >= 0:
         return x
     return 256 + x
+
 
 class Template:
     def __init__(self, file):
@@ -42,16 +31,10 @@ class Template:
         return self.contents % dict
 
 
-def extract_data_at_location(ncfilename, lon, lat):
-  data = subprocess.check_output(['gdallocationinfo', ncfilename, '-wgs84', '-valonly', lon, lat])
+def run_gdallocationinfo(path, lon, lat):
+  data = subprocess.check_output(['gdallocationinfo', path, '-wgs84', '-valonly', lon, lat])
   return data
 
-
-def get_year_from_filename(filename):
-  return filename.split('.')[1]
-
-
-ALL_DAYS_PATH = './all_product_days'
 
 def get_all_todo_days():
   days = []
@@ -61,12 +44,15 @@ def get_all_todo_days():
   return days
 
 
-def get_todo_jdays():
-  '''This function creates a list of julian days for product dates
-  that may have available NRT data.'''
-  days = get_all_todo_days() # TODO: test this!
-  if not len(days):
-    reset_todo_dates_file()
+def get_current_year():
+  today = datetime.datetime.today()
+  year = today.strftime('%Y')
+  return year
+
+
+def get_possible_data_jdays_this_year():
+  '''Return a list of julian days for which data may exist for this year.'''
+  days = get_all_todo_days()
   today = datetime.datetime.today()
   today = today.strftime('%Y%j')
   today = datetime.datetime.strptime(today, '%Y%j')
@@ -74,78 +60,84 @@ def get_todo_jdays():
   dates = map(lambda day: datetime.datetime.strptime('{0}{1}'.format(year, day), '%Y%j'), days)
   dates = filter(lambda d: d <= today - datetime.timedelta(days=8), dates)
   days = list(map(lambda d: d.strftime('%j'), dates))
-  #dates = filter(lambda d: not max_file_exists('std', d), dates)
   return days
-
 
 
 def get_nrt_data(year, lon, lat, num_std_points):
   '''Fetch NRT data points at a location for all days without STD data available.
 
   The number of data points at any location for an entire year is 46.
-  There are usually going to be 8-day NRT files sitting around for older dates
-  that already have STD data available. To prevent double-counting the data,
-  we determine how many dates are possible to this point, remove the dates
+  Determine how many dates are possible to this point, remove the dates
   accounted for already by STD data, and search for any remaining NRT files
   that match the remaining dates.
   '''
-  days = get_todo_jdays()
+  days = get_possible_data_jdays_this_year()
   # List of days not accounted for by STD data
   nrt_days = days[num_std_points:]
-  # start/end indices for extracting the julian day from the NRT file
-  jd_slice_start, jd_slice_end = 14, 17
-  nrt_files = [ f for f in sorted(os.listdir(FORWARN_NRT_MAX_MODIS_DIR)) 
-    if 'nrt' in f and year in f and f[jd_slice_start:jd_slice_end] in nrt_days ]
+  nrt_paths = [ os.path.join(PRECURSOR_DIR, jd, get_8day_max_nrt_filename(get_current_year(), jd)) for jd in nrt_days ]
+  nrt_paths = list(sorted(filter(os.path.exists, nrt_paths)))
   data = []
-  for nrt_f in nrt_files:
-    p = os.path.join(FORWARN_NRT_MAX_MODIS_DIR, nrt_f)
-    d = extract_data_at_location(p, lon, lat)
+  for nrt_path in nrt_paths:
+    d = run_gdallocationinfo(nrt_path, lon, lat)
     data.append(d)
   return data
+
+
+def scale_value(val):
+  val = float(val)
+  scaled = (val/250.0)*100
+  return scaled
 
 
 def format_data_output(data, format_string, times, time_index_offset=0):
   output = []
   for i, v in enumerate(data):
-      # Any value greater than 100 is invalid so skip it
-      if int(v) > 100:
+      # Any value greater than 250 is invalid so skip it
+      if int(v) > 250:
           continue
       if v == '0':
           val = v
       else:
-          val = str(int(v))
+          val = str(scale_value(v))
       output.append(format_string % (times[time_index_offset+i],val))
   return output
 
 
+def get_full_datestrings_for(year):
+    is_leap = calendar.isleap(int(year))
+    
+    if is_leap:
+      f = open(NONLEAP_DATES_FILE)
+    else:
+      f = open(LEAP_DATES_FILE)
+    partial_datestrings = [ line.strip() for line in f ]
+    f.close()
+    # The final datestring falls on the following year so build separately
+    full_datestrings = [ '{}{}'.format(str(year), d) for d in partial_datestrings[:-1] ]
+    full_datestrings.append('{}{}'.format(str(int(year)+1), partial_datestrings[-1]))
+    return full_datestrings
+
+
 output = []
-for tsfile in FORWARN_MAX_MODIS_FILES:
-    tsfile = get_tsfile_path(tsfile)
-    if tsfile is False:
-        continue
+for year in range(DATA_YEAR_START, int(get_current_year())+1):
+    yr_maxes_std_path = get_yr_maxes_std_path_for_yr(year)
 
-    ncfilename = tsfile + ".nc"
-
-    data = extract_data_at_location(ncfilename, lon, lat)
+    data = run_gdallocationinfo(yr_maxes_std_path, lon, lat)
     data = data.split("\n");
     data.remove('')
 
-    times = []
-    tptree = ET.parse(tsfile + ".ts.xml")
-    timepoints = tptree.findall('.//timepoint')
-    for timepoint in timepoints:
-        times.append(timepoint.text)
-
+    datestrings = get_full_datestrings_for(year)
     format_string = "%s,%s,-9000"
-    formatted_output = format_data_output(data, format_string, times)
+    formatted_output = format_data_output(data, format_string, datestrings)
     output.extend(formatted_output)
 
-    # 46 data points in a year.
-    # If there's less than 46 data points we're processing the current year.
+    if len(data) < 46 and year != get_current_year():
+      # This is probably bad and means an std file for the previous year was not build properly
+      pass
+
     # Check for available near-realtime data
-    if len(data) < 46:
+    if len(data) < 46 and year == get_current_year():
       num_std_points = len(data)
-      year = get_year_from_filename(tsfile)
       nrt_data = get_nrt_data(year, lon, lat, num_std_points)
       format_string_nrt = "%s,-9000,%s"
       # Send num_std_points to offset the index of the times array so the NRT data
