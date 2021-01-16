@@ -15,9 +15,9 @@ DEFAULT_FILE_EXT_8DAY_MAX_NRT = 'img'
 # are referenced from the html/ directory
 
 # File containing all julian days for the year (zero-padded)
-ALL_DAYS_PATH = '../all_product_days'
+ALL_DAYS_PATH = '../all_product_days.txt'
 
-# These dates are the end dates for the ForWarn 2 24-day windows
+# End dates for the ForWarn 2 24-day windows
 NONLEAP_DATES_FILE = "../leap-dates.txt"
 LEAP_DATES_FILE = "../nonleap-dates.txt"
 
@@ -25,7 +25,7 @@ LEAP_DATES_FILE = "../nonleap-dates.txt"
 # Symlinks to data directories
 
 # Year maxes maxMODIS STD TIFs
-FORWARN_YR_MAX_STD_DIR = "../data/forwarn_yr_max_std"
+STD_MAXES_BY_YR_DIR = "../data/std_maxes_by_year"
 
 # Archive of all precursors (for fetching NRT data)
 PRECURSOR_DIR = '../data/precursors'
@@ -43,5 +43,5 @@ def get_8day_max_nrt_filename(yr, jd, ext=DEFAULT_FILE_EXT_8DAY_MAX_NRT):
 
 def get_yr_maxes_std_path_for_yr(yr):
   '''Returns the path to the all-year maxes STD file for a given year.'''
-  return os.path.join(FORWARN_YR_MAX_STD_DIR, get_yr_maxes_std_filename(yr))
+  return os.path.join(STD_MAXES_BY_YR_DIR, get_yr_maxes_std_filename(yr))
 

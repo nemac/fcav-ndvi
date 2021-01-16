@@ -4,15 +4,17 @@ import cgi, sys, os, os.path
 import calendar
 
 sys.path.append("..")
-from Config import *
+from config import *
 
 import subprocess, datetime
+
 
 params = cgi.FieldStorage()
 argstring = params["args"].value
 arglist = argstring.split(",")
 lon = arglist[1]
 lat = arglist[2]
+
 
 def unsign8(x):
     if x >= 0:
