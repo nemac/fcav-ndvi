@@ -8,7 +8,6 @@ DATA_YEAR_START = 2003
 DEFAULT_FILE_EXT_YR_MAX_STD = 'tif'
 DEFAULT_FILE_EXT_8DAY_MAX_NRT = 'img'
 
-
 ## Helper files
 
 # Note: prepending relative parent to paths since they
@@ -20,7 +19,6 @@ ALL_DAYS_PATH = '../all_product_days.txt'
 # End dates for the ForWarn 2 24-day windows
 NONLEAP_DATES_FILE = "../leap-dates.txt"
 LEAP_DATES_FILE = "../nonleap-dates.txt"
-
 
 # Symlinks to data directories
 

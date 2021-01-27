@@ -2,12 +2,13 @@
 
 import cgi, sys, os, os.path
 import calendar
+import subprocess, datetime
 
 sys.path.append("..")
 from config import *
 
-import subprocess, datetime
 
+ALL_MODIS_JULIAN_DAYS = ("001", "009", "017", "025", "033", "041", "049", "057", "065", "073", "081", "089", "097", "105", "113", "121", "129", "137", "145", "153", "161", "169", "177", "185", "193", "201", "209", "217", "225", "233", "241", "249", "257", "265", "273", "281", "289", "297", "305", "313", "321", "329", "337", "345", "353", "361")
 
 params = cgi.FieldStorage()
 argstring = params["args"].value
@@ -38,14 +39,6 @@ def run_gdallocationinfo(path, lon, lat):
   return data
 
 
-def get_all_todo_days():
-  days = []
-  with open(ALL_DAYS_PATH) as f:
-    for jd in f:
-      days.append(jd.strip())
-  return days
-
-
 def get_current_year():
   today = datetime.datetime.today()
   year = today.strftime('%Y')
@@ -54,7 +47,7 @@ def get_current_year():
 
 def get_possible_data_jdays_this_year():
   '''Return a list of julian days for which data may exist for this year.'''
-  days = get_all_todo_days()
+  days = ALL_MODIS_JULIAN_DAYS
   today = datetime.datetime.today()
   today = today.strftime('%Y%j')
   today = datetime.datetime.strptime(today, '%Y%j')
@@ -133,28 +126,28 @@ for year in range(DATA_YEAR_START, int(get_current_year())+1):
     formatted_output = format_data_output(data, format_string, datestrings)
     output.extend(formatted_output)
 
-    if len(data) < 46 and year != get_current_year():
+    if len(data) < 46 and int(year) != int(get_current_year()):
       # This is probably bad and means an std file for the previous year was not build properly
-      pass
+      print("ERROR Malformed year file {}".format(year))
+      break
 
     # Check for available near-realtime data
-    if len(data) < 46 and year == get_current_year():
+    if len(data) < 46 and int(year) == int(get_current_year()):
       num_std_points = len(data)
       nrt_data = get_nrt_data(year, lon, lat, num_std_points)
       format_string_nrt = "%s,-9000,%s"
-      # Send num_std_points to offset the index of the times array so the NRT data
+      # Send num_std_points to offset the index of the datestrings array so the NRT data
       # gets mapped to the correct timepoint
-      formatted_output = format_data_output(nrt_data, format_string_nrt, times, num_std_points)
+      formatted_output = format_data_output(nrt_data, format_string_nrt, datestrings, num_std_points)
       # Add a dummy point at the location of the final std point to connect
       # a line between the final STD point and the first NRT point
-      dummy_point = format_data_output([ data[-1] ], format_string_nrt, times, num_std_points-1)
+      dummy_point = format_data_output([ data[-1] ], format_string_nrt, datestrings, num_std_points-1)
       # Dummy point becomes first NRT point in output
       output.extend(dummy_point)
       output.extend(formatted_output)
 
 
 muglTemplate = Template("../mugl.tpl.xml")
-
 print "Content-type: text/xml\n"
 
 print muglTemplate.render({
