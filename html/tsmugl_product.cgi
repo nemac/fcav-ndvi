@@ -74,6 +74,7 @@ def get_nrt_data(year, lon, lat, num_std_points):
   data = []
   for nrt_path in nrt_paths:
     d = run_gdallocationinfo(nrt_path, lon, lat)
+    d = d.rstrip()
     data.append(d)
   return data
 
@@ -148,6 +149,7 @@ for year in range(DATA_YEAR_START, int(get_current_year())+1):
 
 
 muglTemplate = Template("../mugl.tpl.xml")
+
 print "Content-type: text/xml\n"
 
 print muglTemplate.render({
