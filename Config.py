@@ -15,7 +15,7 @@
 FORWARN_STD_MAX_MODIS_DIR = "../data/forwarn_archive"
 
 # Max MODIS NRT NetCDFs (8-day)
-FORWARN_NRT_MAX_MODIS_DIR = "/fsdata4/forwarn2_products/forwarn2_build_dev/netcdf/nrt"
+FORWARN_NRT_MAX_MODIS_DIR = "/fsdata4/forwarn2_products/forwarn2_build_prod/netcdf/nrt"
 
 # LanDAT NDVI files from Joe Spruce
 LANDAT_NDVI_ARCHIVE_DIR = "../data/landat_archive"
@@ -77,5 +77,6 @@ FORWARN_MAX_MODIS_FILES = [
        'maxMODIS.2017.std',
        'maxMODIS.2018.std',
        'maxMODIS.2019.std',
-       'maxMODIS.2020.std'
+       'maxMODIS.2020.std',
+       'maxMODIS.2021.std'
 ]
