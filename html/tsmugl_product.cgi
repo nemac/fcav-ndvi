@@ -34,7 +34,15 @@ class Template:
 
 def run_gdallocationinfo(path, lon, lat):
   path = os.path.realpath(path)
-  proc = subprocess.run('gdallocationinfo {} -wgs84 -valonly {} {}'.format(path, lon, lat))
+  # CompletedSubprocess
+  #c = f'gdallocationinfo -wgs84 -valonly {path} {lon} {lat}'
+  c = [f'gdallocationinfo -wgs84 -valonly {path} {lon} {lat}']
+  result = subprocess.run(c, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+  msg = 'STDOUT: {}\n\n'.format(result.stdout.decode('utf-8'))
+  msg += 'STDERR: {}\n\n'.format(result.stderr.decode('utf-8'))
+  if result.returncode > 0:
+    raise Exception(msg)
+  return result.stdout.decode('utf-8')
 
 
 def get_current_year():
@@ -119,8 +127,8 @@ def get_full_output():
 
       data = run_gdallocationinfo(yr_maxes_std_path, lon, lat)
       data = data.split("\n");
-      #data.remove('')
-
+      # the last element is an empty string so throw it out
+      data = data[:-1]
       datestrings = get_full_datestrings_for(year)
       format_string = "%s,%s,-9000"
       formatted_output = format_data_output(data, format_string, datestrings)
@@ -157,8 +165,8 @@ try:
           'debug'  : "(x,y) = (%s,%s)" % (lon,lat)
         }))
 except Exception as e:
-  print('Content-type: text/html')
+  print('Content-type: text/plain')
   print()
+  import traceback
+  traceback.print_tb(e.__traceback__)
   print(str(e))
-  print()
-  print(cgi.test())
