@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import cgi, sys, os, os.path
 import calendar
@@ -7,7 +7,6 @@ import subprocess, datetime
 sys.path.append("..")
 from config import *
 
-
 ALL_MODIS_JULIAN_DAYS = ("001", "009", "017", "025", "033", "041", "049", "057", "065", "073", "081", "089", "097", "105", "113", "121", "129", "137", "145", "153", "161", "169", "177", "185", "193", "201", "209", "217", "225", "233", "241", "249", "257", "265", "273", "281", "289", "297", "305", "313", "321", "329", "337", "345", "353", "361")
 
 params = cgi.FieldStorage()
@@ -15,7 +14,6 @@ argstring = params["args"].value
 arglist = argstring.split(",")
 lon = arglist[1]
 lat = arglist[2]
-
 
 def unsign8(x):
     if x >= 0:
@@ -35,8 +33,8 @@ class Template:
 
 
 def run_gdallocationinfo(path, lon, lat):
-  data = subprocess.check_output(['gdallocationinfo', path, '-wgs84', '-valonly', lon, lat])
-  return data
+  path = os.path.realpath(path)
+  proc = subprocess.run('gdallocationinfo {} -wgs84 -valonly {} {}'.format(path, lon, lat))
 
 
 def get_current_year():
@@ -74,14 +72,13 @@ def get_nrt_data(year, lon, lat, num_std_points):
   data = []
   for nrt_path in nrt_paths:
     d = run_gdallocationinfo(nrt_path, lon, lat)
-    d = d.rstrip()
+    d = str(int(d.rstrip()))
     data.append(d)
   return data
 
 
 def scale_value(val):
-  val = float(val)
-  scaled = (val/250.0)*100
+  scaled = int(round((float(val)/250.0)*100))
   return scaled
 
 
@@ -114,45 +111,54 @@ def get_full_datestrings_for(year):
     return full_datestrings
 
 
-output = []
-for year in range(DATA_YEAR_START, int(get_current_year())+1):
-    yr_maxes_std_path = get_yr_maxes_std_path_for_yr(year)
 
-    data = run_gdallocationinfo(yr_maxes_std_path, lon, lat)
-    data = data.split("\n");
-    data.remove('')
+def get_full_output():
+  output = []
+  for year in range(DATA_YEAR_START, int(get_current_year())+1):
+      yr_maxes_std_path = get_yr_maxes_std_path_for_yr(year)
 
-    datestrings = get_full_datestrings_for(year)
-    format_string = "%s,%s,-9000"
-    formatted_output = format_data_output(data, format_string, datestrings)
-    output.extend(formatted_output)
+      data = run_gdallocationinfo(yr_maxes_std_path, lon, lat)
+      data = data.split("\n");
+      #data.remove('')
 
-    if len(data) < 46 and int(year) != int(get_current_year()):
-      # This is probably bad and means an std file for the previous year was not build properly
-      print("ERROR Malformed year file {}".format(year))
-      break
-
-    # Check for available near-realtime data
-    if len(data) < 46 and int(year) == int(get_current_year()):
-      num_std_points = len(data)
-      nrt_data = get_nrt_data(year, lon, lat, num_std_points)
-      format_string_nrt = "%s,-9000,%s"
-      # Send num_std_points to offset the index of the datestrings array so the NRT data
-      # gets mapped to the correct timepoint
-      formatted_output = format_data_output(nrt_data, format_string_nrt, datestrings, num_std_points)
-      # Add a dummy point at the location of the final std point to connect
-      # a line between the final STD point and the first NRT point
-      dummy_point = format_data_output([ data[-1] ], format_string_nrt, datestrings, num_std_points-1)
-      # Dummy point becomes first NRT point in output
-      output.extend(dummy_point)
+      datestrings = get_full_datestrings_for(year)
+      format_string = "%s,%s,-9000"
+      formatted_output = format_data_output(data, format_string, datestrings)
       output.extend(formatted_output)
 
+      if len(data) < 46 and int(year) != int(get_current_year()):
+        # This is probably bad and means an std file for the previous year was not build properly
+        print("ERROR Malformed year file {}".format(year))
+        break
 
-muglTemplate = Template("../mugl.tpl.xml")
+      # Check for available near-realtime data
+      if len(data) < 46 and int(year) == int(get_current_year()):
+        num_std_points = len(data)
+        nrt_data = get_nrt_data(year, lon, lat, num_std_points)
+        format_string_nrt = "%s,-9000,%s"
+        # Send num_std_points to offset the index of the datestrings array so the NRT data
+        # gets mapped to the correct timepoint
+        formatted_output = format_data_output(nrt_data, format_string_nrt, datestrings, num_std_points)
+        # Add a dummy point at the location of the final std point to connect
+        # a line between the final STD point and the first NRT point
+        dummy_point = format_data_output([ data[-1] ], format_string_nrt, datestrings, num_std_points-1)
+        # Dummy point becomes first NRT point in output
+        output.extend(dummy_point)
+        output.extend(formatted_output)
+  return output
 
-print "Content-type: text/xml\n"
 
-print muglTemplate.render({
-        'values' : "\n".join(output),
-        'debug'  : "(x,y) = (%s,%s)" % (lon,lat)
-      })
+try:
+  output = get_full_output()
+  muglTemplate = Template("../mugl.tpl.xml")
+  print("Content-type: text/xml\n")
+  print(muglTemplate.render({
+          'values' : "\n".join(output),
+          'debug'  : "(x,y) = (%s,%s)" % (lon,lat)
+        }))
+except Exception as e:
+  print('Content-type: text/html')
+  print()
+  print(str(e))
+  print()
+  print(cgi.test())
