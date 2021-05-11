@@ -70,7 +70,6 @@ def get_nrt_data(year, lon, lat, num_std_points):
   days = get_possible_data_jdays_this_year()
   # List of days not accounted for by STD data
   nrt_days = days[num_std_points:]
-  import pdb; pdb.set_trace()
   nrt_paths = [ os.path.join(PRECURSOR_DIR, jd, get_8day_max_nrt_filename(get_current_year(), jd)) for jd in nrt_days ]
   nrt_paths = list(sorted(filter(os.path.exists, nrt_paths)))
   data = []
