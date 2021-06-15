@@ -138,19 +138,19 @@ def get_full_output(lon, lat):
       # 46 data points in a year.
       # If there's less than 46 data points we're processing the current year.
       # Check for available near-realtime data
-      if len(data) < 46:
-        num_std_points = len(data)
-        year = get_year_from_tspath(tsfile)
-        nrt_data = get_nrt_data(year, lon, lat, num_std_points)
-        if len(nrt_data):
-          format_string_nrt = "%s,-9000,%s"
-          # Send num_std_points to offset the index of the times array so the NRT data
-          # gets mapped to the correct timepoint
-          formatted_output = format_data_output(nrt_data, format_string_nrt, times, num_std_points)
-          # Add a dummy point at the location of the final std point to connect
-          # a line between the final STD point and the first NRT point
-          dummy_point = format_data_output([ data[-1] ], format_string_nrt, times, num_std_points-1)
-          # Dummy point becomes first NRT point in output
-          output.extend(dummy_point)
-          output.extend(formatted_output)
+      #if len(data) < 46:
+      #  num_std_points = len(data)
+      #  year = get_year_from_tspath(tsfile)
+      #  nrt_data = get_nrt_data(year, lon, lat, num_std_points)
+      #  if len(nrt_data):
+      #    format_string_nrt = "%s,-9000,%s"
+      #    # Send num_std_points to offset the index of the times array so the NRT data
+      #    # gets mapped to the correct timepoint
+      #    formatted_output = format_data_output(nrt_data, format_string_nrt, times, num_std_points)
+      #    # Add a dummy point at the location of the final std point to connect
+      #    # a line between the final STD point and the first NRT point
+      #    dummy_point = format_data_output([ data[-1] ], format_string_nrt, times, num_std_points-1)
+      #    # Dummy point becomes first NRT point in output
+      #    output.extend(dummy_point)
+      #    output.extend(formatted_output)
   return output
