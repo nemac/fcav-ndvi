@@ -15,6 +15,7 @@ arglist = argstring.split(",")
 lon = arglist[1]
 lat = arglist[2]
 
+
 def unsign8(x):
     if x >= 0:
         return x
@@ -64,6 +65,30 @@ def get_possible_data_jdays_this_year():
   return days
 
 
+def get_todo_dates(self):
+  '''Get a list of potential dates for which ForWarn 2 products may be built.
+
+  Return a list of MODIS product dates in the past two years for which:
+
+  1. Enough time has passed that NRT data for that date may be available.
+  2. A complete set of ForWarn 2 products does not exist.
+
+  In theory NRT data should be available for these dates, but it's possible the data is late.
+  '''
+  all_days = ALL_FW2_JULIAN_DAYS
+  today = datetime.datetime.today()
+  today_year = today.strftime('%Y')
+  last_year = str(int(today_year) - 1)
+  this_year_todo_dates = map(lambda jd: self.get_datetime_for_year_jd(today_year, jd), all_days)
+  last_year_todo_dates = map(lambda jd: self.get_datetime_for_year_jd(last_year, jd), all_days)
+  potential_this_year_todo_dates = self.filter_unavailable_modis_dates(this_year_todo_dates)
+  potential_last_year_todo_dates = self.filter_unavailable_modis_dates(last_year_todo_dates)
+  potential_todo_dates = potential_this_year_todo_dates + potential_last_year_todo_dates
+  potential_todo_date_dicts = list(map(self.get_year_jd_config_for_datetime, potential_todo_dates))
+  todo_dates = list(filter(lambda d: not self.is_ok(d), potential_todo_date_dicts))
+  return todo_dates
+
+
 def get_nrt_data(year, lon, lat, num_std_points):
   '''Fetch NRT data points at a location for all days without STD data available.
 
@@ -90,7 +115,7 @@ def scale_value(val):
   return scaled
 
 
-def format_data_output(data, format_string, times, time_index_offset=0):
+def format_data_output(data, format_string, times):
   output = []
   for i, v in enumerate(data):
       # Any value greater than 250 is invalid so skip it
@@ -100,8 +125,12 @@ def format_data_output(data, format_string, times, time_index_offset=0):
           val = v
       else:
           val = str(scale_value(v))
-      output.append(format_string % (times[time_index_offset+i],val))
+      output.append(format_datum(format_string, times[i], val))
   return output
+
+
+def format_datum(value, format_string, datestring):
+  return format_string % (datestring, value)
 
 
 def get_full_datestrings_for(year):
@@ -141,6 +170,15 @@ def get_full_output():
 
       # Check for available near-realtime data
       if len(data) < 46 and int(year) == int(get_current_year()):
+        nrt_jd = ALL_MODIS_JULIAN_DAYS[len(data)]
+        nrt_path = get_8day_max_nrt_path(year, nrt_jd)
+        if os.path.exists(nrt_path):
+          nrt_datum = run_gdallocationinfo(nrt_path, lon, lat)
+          nrt_datum = str(int(d.rstrip()))
+          data.append(d)
+           
+          
+        
         num_std_points = len(data)
         nrt_data = get_nrt_data(year, lon, lat, num_std_points)
         format_string_nrt = "%s,-9000,%s"
@@ -170,3 +208,5 @@ except Exception as e:
   import traceback
   traceback.print_tb(e.__traceback__)
   print(str(e))
+
+
