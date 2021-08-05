@@ -39,6 +39,10 @@ def get_8day_max_nrt_filename(yr, jd, ext=DEFAULT_FILE_EXT_8DAY_MAX_NRT):
   '''Returns the filename of the NRT max filename for some 8-day window given year and day of year.'''
   return 'maxMODIS.{}.{}.nrt.{}'.format(yr, jd, ext)
 
+def get_8day_max_nrt_path(yr, jd, ext=DEFAULT_FILE_EXT_8DAY_MAX_NRT):
+  '''Returns the path to an NRT max file.'''
+  return os.path.join(PRECURSOR_DIR, jd, get_8day_max_nrt_filename(yr, jd, ext))
+
 def get_yr_maxes_std_path_for_yr(yr):
   '''Returns the path to the all-year maxes STD file for a given year.'''
   return os.path.join(STD_MAXES_BY_YR_DIR, get_yr_maxes_std_filename(yr))

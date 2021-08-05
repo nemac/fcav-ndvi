@@ -16,21 +16,124 @@ arglist = argstring.split(",")
 lon = arglist[1]
 lat = arglist[2]
 
-def main():
-  try:
-    output = get_full_output(lon, lat)
-    muglTemplate = Template("../mugl.tpl.xml")
-    print("Content-type: text/xml\n")
-    print(muglTemplate.render({
-            'values' : "\n".join(output),
-            'debug'  : "(x,y) = (%s,%s)" % (lon,lat)
-          }))
-  except Exception as e:
-    print('Content-type: text/plain')
-    print()
-    import traceback
-    traceback.print_tb(e.__traceback__)
-    print(str(e))
+class Template:
+    def __init__(self, file):
+        f = open(file, "r")
+        self.contents = ""
+        for line in f:
+            self.contents = self.contents + line
+        f.close()
+    def render(self, dict):
+        return self.contents % dict
 
 
-main()
+def run_gdallocationinfo(path, lon, lat):
+  path = os.path.realpath(path)
+  # CompletedSubprocess
+  #c = f'gdallocationinfo -wgs84 -valonly {path} {lon} {lat}'
+  c = [f'gdallocationinfo -wgs84 -valonly {path} {lon} {lat}']
+  result = subprocess.run(c, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+  msg = 'STDOUT: {}\n\n'.format(result.stdout.decode('utf-8'))
+  msg += 'STDERR: {}\n\n'.format(result.stderr.decode('utf-8'))
+  if result.returncode > 0:
+    raise Exception(msg)
+  return result.stdout.decode('utf-8')
+
+
+def get_current_year():
+  today = datetime.datetime.today()
+  year = today.strftime('%Y')
+  return year
+
+
+def scale_value(val):
+  scaled = int(round((float(val)/250.0)*100))
+  return scaled
+
+
+def format_data_output(data, format_string, times):
+  output = []
+  for i, v in enumerate(data):
+      # Any value greater than 250 is invalid so skip it
+      if int(v) > 250:
+          continue
+      if v == '0':
+          val = v
+      else:
+          val = str(scale_value(v))
+      output.append(format_datum(val, format_string, times[i]))
+  return output
+
+
+def format_datum(value, format_string, datestring):
+  return format_string.format(datestring, value)
+
+
+def get_full_datestrings_for(year):
+    is_leap = calendar.isleap(int(year))
+    if is_leap:
+      f = open(NONLEAP_DATES_FILE)
+    else:
+      f = open(LEAP_DATES_FILE)
+    partial_datestrings = [ line.strip() for line in f ]
+    f.close()
+    # The final datestring falls on the following year so build separately
+    full_datestrings = [ '{}{}'.format(str(year), d) for d in partial_datestrings[:-1] ]
+    full_datestrings.append('{}{}'.format(str(int(year)+1), partial_datestrings[-1]))
+    return full_datestrings
+
+
+
+def get_full_output():
+  format_string = "{},{},-9000"
+  format_string_nrt = "{},-9000,{}"
+  output = []
+  for year in range(DATA_YEAR_START, int(get_current_year())+1):
+    yr_maxes_std_path = get_yr_maxes_std_path_for_yr(year)
+
+    data = run_gdallocationinfo(yr_maxes_std_path, lon, lat)
+    data = data.split("\n");
+    # the last element is an empty string so throw it out
+    data = data[:-1]
+    datestrings = get_full_datestrings_for(year)
+    formatted_output = format_data_output(data, format_string, datestrings)
+    output.extend(formatted_output)
+
+    if len(data) < 46 and int(year) != int(get_current_year()):
+      # This is probably bad and means an std file for the previous year was not build properly
+      print("ERROR Malformed year file {}".format(year))
+      break
+
+    # Check for available near-realtime data
+    if len(data) < 46 and int(year) == int(get_current_year()):
+      nrt_jd = ALL_MODIS_JULIAN_DAYS[len(data)]
+      nrt_path = get_8day_max_nrt_path(year, nrt_jd)
+      if os.path.exists(nrt_path):
+        # Add a dummy point at the location of the final std point to connect
+        # a line between the final STD point and the first NRT point
+        # Dummy point becomes first NRT point in output
+        dummy_datestrings = [ datestrings[len(data)-1] ]
+        dummy_point = format_data_output([ data[-1] ], format_string_nrt, dummy_datestrings)
+        nrt_datum = run_gdallocationinfo(nrt_path, lon, lat)
+        nrt_datum = str(int(nrt_datum.rstrip()))
+        nrt_datestrings = [ datestrings[len(data)] ]
+        formatted_nrt_data = format_data_output([nrt_datum], format_string_nrt, nrt_datestrings)
+        output.extend(dummy_point)
+        output.extend(formatted_nrt_data)
+  return output
+
+
+try:
+  output = get_full_output()
+  muglTemplate = Template("../mugl.tpl.xml")
+  print("Content-type: text/xml\n")
+  print(muglTemplate.render({
+          'values' : "\n".join(output),
+          'debug'  : "(x,y) = (%s,%s)" % (lon,lat)
+        }))
+except Exception as e:
+  print('Content-type: text/plain')
+  print()
+  import traceback
+  traceback.print_tb(e.__traceback__)
+  print(str(e))
