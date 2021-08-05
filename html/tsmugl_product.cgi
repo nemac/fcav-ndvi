@@ -16,12 +16,6 @@ lon = arglist[1]
 lat = arglist[2]
 
 
-def unsign8(x):
-    if x >= 0:
-        return x
-    return 256 + x
-
-
 class Template:
     def __init__(self, file):
         f = open(file, "r")
@@ -52,64 +46,6 @@ def get_current_year():
   return year
 
 
-def get_possible_data_jdays_this_year():
-  '''Return a list of julian days for which data may exist for this year.'''
-  days = ALL_MODIS_JULIAN_DAYS
-  today = datetime.datetime.today()
-  today = today.strftime('%Y%j')
-  today = datetime.datetime.strptime(today, '%Y%j')
-  year = today.strftime('%Y')
-  dates = map(lambda day: datetime.datetime.strptime('{0}{1}'.format(year, day), '%Y%j'), days)
-  dates = filter(lambda d: d <= today - datetime.timedelta(days=8), dates)
-  days = list(map(lambda d: d.strftime('%j'), dates))
-  return days
-
-
-def get_todo_dates(self):
-  '''Get a list of potential dates for which ForWarn 2 products may be built.
-
-  Return a list of MODIS product dates in the past two years for which:
-
-  1. Enough time has passed that NRT data for that date may be available.
-  2. A complete set of ForWarn 2 products does not exist.
-
-  In theory NRT data should be available for these dates, but it's possible the data is late.
-  '''
-  all_days = ALL_FW2_JULIAN_DAYS
-  today = datetime.datetime.today()
-  today_year = today.strftime('%Y')
-  last_year = str(int(today_year) - 1)
-  this_year_todo_dates = map(lambda jd: self.get_datetime_for_year_jd(today_year, jd), all_days)
-  last_year_todo_dates = map(lambda jd: self.get_datetime_for_year_jd(last_year, jd), all_days)
-  potential_this_year_todo_dates = self.filter_unavailable_modis_dates(this_year_todo_dates)
-  potential_last_year_todo_dates = self.filter_unavailable_modis_dates(last_year_todo_dates)
-  potential_todo_dates = potential_this_year_todo_dates + potential_last_year_todo_dates
-  potential_todo_date_dicts = list(map(self.get_year_jd_config_for_datetime, potential_todo_dates))
-  todo_dates = list(filter(lambda d: not self.is_ok(d), potential_todo_date_dicts))
-  return todo_dates
-
-
-def get_nrt_data(year, lon, lat, num_std_points):
-  '''Fetch NRT data points at a location for all days without STD data available.
-
-  The number of data points at any location for an entire year is 46.
-  Determine how many dates are possible to this point, remove the dates
-  accounted for already by STD data, and search for any remaining NRT files
-  that match the remaining dates.
-  '''
-  days = get_possible_data_jdays_this_year()
-  # List of days not accounted for by STD data
-  nrt_days = days[num_std_points:]
-  nrt_paths = [ os.path.join(PRECURSOR_DIR, jd, get_8day_max_nrt_filename(get_current_year(), jd)) for jd in nrt_days ]
-  nrt_paths = list(sorted(filter(os.path.exists, nrt_paths)))
-  data = []
-  for nrt_path in nrt_paths:
-    d = run_gdallocationinfo(nrt_path, lon, lat)
-    d = str(int(d.rstrip()))
-    data.append(d)
-  return data
-
-
 def scale_value(val):
   scaled = int(round((float(val)/250.0)*100))
   return scaled
@@ -125,17 +61,16 @@ def format_data_output(data, format_string, times):
           val = v
       else:
           val = str(scale_value(v))
-      output.append(format_datum(format_string, times[i], val))
+      output.append(format_datum(val, format_string, times[i]))
   return output
 
 
 def format_datum(value, format_string, datestring):
-  return format_string % (datestring, value)
+  return format_string.format(datestring, value)
 
 
 def get_full_datestrings_for(year):
     is_leap = calendar.isleap(int(year))
-    
     if is_leap:
       f = open(NONLEAP_DATES_FILE)
     else:
@@ -150,47 +85,41 @@ def get_full_datestrings_for(year):
 
 
 def get_full_output():
+  format_string = "{},{},-9000"
+  format_string_nrt = "{},-9000,{}"
   output = []
   for year in range(DATA_YEAR_START, int(get_current_year())+1):
-      yr_maxes_std_path = get_yr_maxes_std_path_for_yr(year)
+    yr_maxes_std_path = get_yr_maxes_std_path_for_yr(year)
 
-      data = run_gdallocationinfo(yr_maxes_std_path, lon, lat)
-      data = data.split("\n");
-      # the last element is an empty string so throw it out
-      data = data[:-1]
-      datestrings = get_full_datestrings_for(year)
-      format_string = "%s,%s,-9000"
-      formatted_output = format_data_output(data, format_string, datestrings)
-      output.extend(formatted_output)
+    data = run_gdallocationinfo(yr_maxes_std_path, lon, lat)
+    data = data.split("\n");
+    # the last element is an empty string so throw it out
+    data = data[:-1]
+    datestrings = get_full_datestrings_for(year)
+    formatted_output = format_data_output(data, format_string, datestrings)
+    output.extend(formatted_output)
 
-      if len(data) < 46 and int(year) != int(get_current_year()):
-        # This is probably bad and means an std file for the previous year was not build properly
-        print("ERROR Malformed year file {}".format(year))
-        break
+    if len(data) < 46 and int(year) != int(get_current_year()):
+      # This is probably bad and means an std file for the previous year was not build properly
+      print("ERROR Malformed year file {}".format(year))
+      break
 
-      # Check for available near-realtime data
-      if len(data) < 46 and int(year) == int(get_current_year()):
-        nrt_jd = ALL_MODIS_JULIAN_DAYS[len(data)]
-        nrt_path = get_8day_max_nrt_path(year, nrt_jd)
-        if os.path.exists(nrt_path):
-          nrt_datum = run_gdallocationinfo(nrt_path, lon, lat)
-          nrt_datum = str(int(d.rstrip()))
-          data.append(d)
-           
-          
-        
-        num_std_points = len(data)
-        nrt_data = get_nrt_data(year, lon, lat, num_std_points)
-        format_string_nrt = "%s,-9000,%s"
-        # Send num_std_points to offset the index of the datestrings array so the NRT data
-        # gets mapped to the correct timepoint
-        formatted_output = format_data_output(nrt_data, format_string_nrt, datestrings, num_std_points)
+    # Check for available near-realtime data
+    if len(data) < 46 and int(year) == int(get_current_year()):
+      nrt_jd = ALL_MODIS_JULIAN_DAYS[len(data)]
+      nrt_path = get_8day_max_nrt_path(year, nrt_jd)
+      if os.path.exists(nrt_path):
         # Add a dummy point at the location of the final std point to connect
         # a line between the final STD point and the first NRT point
-        dummy_point = format_data_output([ data[-1] ], format_string_nrt, datestrings, num_std_points-1)
         # Dummy point becomes first NRT point in output
+        dummy_datestrings = [ datestrings[len(data)-1] ]
+        dummy_point = format_data_output([ data[-1] ], format_string_nrt, dummy_datestrings)
+        nrt_datum = run_gdallocationinfo(nrt_path, lon, lat)
+        nrt_datum = str(int(nrt_datum.rstrip()))
+        nrt_datestrings = [ datestrings[len(data)] ]
+        formatted_nrt_data = format_data_output([nrt_datum], format_string_nrt, nrt_datestrings)
         output.extend(dummy_point)
-        output.extend(formatted_output)
+        output.extend(formatted_nrt_data)
   return output
 
 
