@@ -90,14 +90,22 @@ def get_full_output():
   output = []
   for year in range(DATA_YEAR_START, int(get_current_year())+1):
     yr_maxes_std_path = get_yr_maxes_std_path_for_yr(year)
-
-    data = run_gdallocationinfo(yr_maxes_std_path, lon, lat)
-    data = data.split("\n");
-    # the last element is an empty string so throw it out
-    data = data[:-1]
     datestrings = get_full_datestrings_for(year)
-    formatted_output = format_data_output(data, format_string, datestrings)
-    output.extend(formatted_output)
+
+    # TODO
+    # At the beginning of January the 2022 std file will not be ready yet
+    # so we need a check here to continue if we're at the current year
+    # and the file doesn't exist
+    if int(get_current_year()) == int(year) and not os.path.exists(yr_maxes_std_path):
+      # No std data for current year yet
+      data = []
+    else:
+      data = run_gdallocationinfo(yr_maxes_std_path, lon, lat)
+      data = data.split("\n");
+      # the last element is an empty string so throw it out
+      data = data[:-1]
+      formatted_output = format_data_output(data, format_string, datestrings)
+      output.extend(formatted_output)
 
     if len(data) < 46 and int(year) != int(get_current_year()):
       # This is probably bad and means an std file for the previous year was not build properly
@@ -112,8 +120,25 @@ def get_full_output():
         # Add a dummy point at the location of the final std point to connect
         # a line between the final STD point and the first NRT point
         # Dummy point becomes first NRT point in output
-        dummy_datestrings = [ datestrings[len(data)-1] ]
-        dummy_point = format_data_output([ data[-1] ], format_string_nrt, dummy_datestrings)
+        if len(data):
+          dummy_datestrings = [ datestrings[len(data)-1] ]
+          dummy_point = format_data_output([ data[-1] ], format_string_nrt, dummy_datestrings)
+        else:
+          '''
+          We're at the beginning of the year when no std file is available.
+          In this case we'll manually create a dummy point by taking the last
+          available std point and transforming it into an nrt-style point
+          by shifting the location of the -9000, but keeping the same "value"
+
+          Example output:
+            ...
+            20211226,58,-9000
+            20220103,62,-9000 <-- At this point in code (this line is output[-1])
+            20220103,-9000,62 <-- Dummy point (same "value" as previous line)
+            20220108,-9000,52 <-- Final NRT point
+          '''
+          dummy_output = output[-1].split(',')
+          dummy_point = [ ','.join([ dummy_output[0], dummy_output[2], dummy_output[1] ]) ]
         nrt_datum = run_gdallocationinfo(nrt_path, lon, lat)
         nrt_datum = str(int(nrt_datum.rstrip()))
         nrt_datestrings = [ datestrings[len(data)] ]
