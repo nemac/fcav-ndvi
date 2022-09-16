@@ -54,14 +54,15 @@ def scale_value(val):
 def format_data_output(data, format_string, times):
   output = []
   for i, v in enumerate(data):
-      # Any value greater than 250 is invalid so skip it
-      if int(v) > 250:
-          continue
-      if v == '0':
-          val = v
-      else:
-          val = str(scale_value(v))
-      output.append(format_datum(val, format_string, times[i]))
+      if v.isnumeric():
+          # Any value greater than 250 is invalid so skip it
+          if int(v) > 250:
+              continue
+          if v == '0':
+              val = v
+          else:
+              val = str(scale_value(v))
+          output.append(format_datum(val, format_string, times[i]))
   return output
 
 
@@ -107,10 +108,10 @@ def get_full_output():
       formatted_output = format_data_output(data, format_string, datestrings)
       output.extend(formatted_output)
 
-    if len(data) < 46 and int(year) != int(get_current_year()):
+   # if len(data) < 46 and int(year) != int(get_current_year()):
       # This is probably bad and means an std file for the previous year was not build properly
-      print("ERROR Malformed year file {}".format(year))
-      break
+    #  print("ERROR Malformed year file {}".format(year))
+    #  break
 
     # Check for available near-realtime data
     if len(data) < 46 and int(year) == int(get_current_year()):

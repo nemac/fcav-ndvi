@@ -18,7 +18,7 @@
 	<labels format="%%1f" spacing="100 50 20 10 5 1"/>
   </verticalaxis>
   <plot>
-     <legend label="MODIS Standard"/>
+     <legend label="Sentinel-3 Standard"/>
     <horizontalaxis ref="datetime">
       <variable ref="datetime"/>
     </horizontalaxis>
@@ -32,7 +32,7 @@
     </renderer>
   </plot>
   <plot>
-    <legend label="MODIS Near Real-Time"/>
+    <legend label="Sentinel-3 Near Real-Time"/>
     <verticalaxis ref="value">
       <variable ref="raw_value"/>
     </verticalaxis>
