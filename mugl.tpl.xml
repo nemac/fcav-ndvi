@@ -32,14 +32,13 @@
     </renderer>
   </plot>
   <plot>
-    <legend label="Sentinel-3 Near Real-Time"/>
+    <legend label="Click and hold graph to slide through time"/>
     <verticalaxis ref="value">
       <variable ref="raw_value"/>
     </verticalaxis>
     <renderer type="pointline">
-      <option name="linecolor" value="red"/>
-      <option name="pointcolor" value="red"/>
-      <option name="pointsize" value="1.0"/>
+      <option name="linecolor" value="white"/>
+      <option name="pointcolor" value="white"/>
     </renderer>
   </plot>
   <data>
