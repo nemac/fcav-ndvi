@@ -8,7 +8,7 @@
   <legend rows="1" border="0" opacity="1" base="0 1" anchor="0 1" position="0 30">
     <icon border="0" width="30" height="30"/>
   </legend>
-  <horizontalaxis id="datetime" type="datetime" min="20190101" max="20230101">
+  <horizontalaxis id="datetime" type="datetime" min="20210101" max="20250101">
     <labels format="%%m/%%d/%%y" spacing="1Y 6M 4M 2M 1M 16D 8D 1D"/>
     <title>Date/Time</title>
     <grid color="0xcccccc"/>
@@ -18,7 +18,7 @@
 	<labels format="%%1f" spacing="100 50 20 10 5 1"/>
   </verticalaxis>
   <plot>
-     <legend label="MODIS Standard"/>
+     <legend label="Sentinel-3 Standard"/>
     <horizontalaxis ref="datetime">
       <variable ref="datetime"/>
     </horizontalaxis>
@@ -32,14 +32,13 @@
     </renderer>
   </plot>
   <plot>
-    <legend label="MODIS Near Real-Time"/>
+    <legend label="Click and hold graph to slide through time"/>
     <verticalaxis ref="value">
       <variable ref="raw_value"/>
     </verticalaxis>
     <renderer type="pointline">
-      <option name="linecolor" value="red"/>
-      <option name="pointcolor" value="red"/>
-      <option name="pointsize" value="1.0"/>
+      <option name="linecolor" value="white"/>
+      <option name="pointcolor" value="white"/>
     </renderer>
   </plot>
   <data>
